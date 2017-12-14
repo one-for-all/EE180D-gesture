@@ -50,45 +50,47 @@ def count_down(count_down_secs):
         time.sleep(1)
     print('start')
 
+# Remote Host for Recognition
+GAME_HOST = raw_input("Game Host ip: ")
+print("Game Host ip is: {}".format(GAME_HOST))
+GAME_PORT = 6672
+
+in_gesture_mode = False
+
 try:
     while True:
-        # print('start recording')
-        motion_data = []
-        # count_down(count_down_seconds)
-        # raw_input('start')
-        time.sleep(0.5)
-        for i in range(int(motion_duration / poll_interval)):
-            if imu.IMURead():
-                data = imu.getIMUData()
-                data_vec = data['accel'] + data['gyro']
-                motion_data.append(data_vec)
-            time.sleep(poll_interval)
-        print('finished recording')
-        motion_data = np.asarray(motion_data).reshape(1, -1)
+        if in_gesture_mode:
+            motion_data = []
+            for i in range(int(motion_duration / poll_interval)):
+                if imu.IMURead():
+                    data = imu.getIMUData()
+                    data_vec = data['accel'] + data['gyro']
+                    motion_data.append(data_vec)
+                time.sleep(poll_interval)
+            print('finished recording')
+            motion_data = np.asarray(motion_data).reshape(1, -1)
 
-        # Test recognition
-        from helper import preprocessing
-        motion_data = preprocessing.regularize_shape(motion_data, 64)
-        motion_data = preprocessing.flatten(motion_data)
-        size = sys.getsizeof(motion_data.tostring())
-        print('size: {}'.format(size))
+            # Test recognition
+            from helper import preprocessing
+            motion_data = preprocessing.regularize_shape(motion_data, 64)
+            motion_data = preprocessing.flatten(motion_data)
+            size = sys.getsizeof(motion_data.tostring())
+            print('size: {}'.format(size))
 
-        HOST = '192.168.0.3'  # The remote host
-        PORT = 6672
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((HOST, PORT))
-        sock.sendall(motion_data.tostring())
-        motion = sock.recv(1024)
-        sock.close()
-        print('detection: {}'.format(motion))
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((GAME_HOST, GAME_PORT))
+            sock.sendall(motion_data.tostring())
+            motion = sock.recv(1024)
+            sock.close()
+            print('detection: {}'.format(motion))
 
-        # Send to communication module
-        HOST = ''  # The remote host
-        PORT = 6666
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((HOST, PORT))
-        sock.sendall('gesture: {}'.format(motion).encode())
-        sock.close()
+            # Send to communication module
+            HOST = ''  # The remote host
+            PORT = 6666
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((HOST, PORT))
+            sock.sendall('gesture: {}'.format(motion).encode())
+            sock.close()
 
         # raw_input('next')
 except KeyboardInterrupt:

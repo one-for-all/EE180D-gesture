@@ -8,7 +8,7 @@ from helper import preprocessing
 from keras.models import load_model
 import tensorflow as tf
 
-motions = ['nothing', 'unarmed-attack-r3']
+motions = ['nothing', 'unarmed-attack-r3', '2Hand-Axe-Attack1']
 model = load_model('model/keras/model_{}motions.h5'.format(len(
     motions)))
 graph = tf.get_default_graph()
@@ -29,7 +29,7 @@ try:
                 data += new_data
                 if sys.getsizeof(data) >= 3093:
                     break
-            motion_data = np.fromstring(data, dtype='float64').reshape(1, -1)
+            motion_data = np.fromstring(data, dtype='float64').reshape(1, -1, 6)
             print("shape: {}".format(motion_data.shape))
 
             # recognize motion
